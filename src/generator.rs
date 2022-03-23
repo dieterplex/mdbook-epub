@@ -13,8 +13,10 @@ use handlebars::{Handlebars, RenderError};
 use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::renderer::RenderContext;
+use once_cell::sync::OnceCell;
 use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
 use serde_json::json;
+use regex::{self, Regex};
 use url::Url;
 
 use crate::config::Config;
@@ -191,9 +193,11 @@ impl<'a> Generator<'a> {
         let mut quote_converter = EventQuoteConverter::new(self.config.curly_quotes);
         let ch_depth = chapter_dir.components().count();
         let asset_link_filter = AssetLinkFilter::new(&self.assets, ch_depth);
+        let local_link_filter = LocalMdLinkFilter::new();
         let events = p
             .map(|event| quote_converter.convert(event))
-            .map(|event| asset_link_filter.apply(event));
+            .map(|event| asset_link_filter.apply(event))
+            .map(|event| local_link_filter.filter(event));
 
         html::push_html(&mut body, events);
 
@@ -501,6 +505,54 @@ fn convert_quotes_to_curly(original_text: &str) -> String {
             converted_char
         })
         .collect()
+}
+
+/// Fix links to the correct location.
+trait LinkFilter {
+    fn filter<'a>(&self, event: Event<'a>) -> Event<'a> {
+        match event {
+            Event::Start(Tag::Link(link_type, dest, title)) => {
+                Event::Start(Tag::Link(link_type, CowStr::from(self.fix(&dest)), title))
+            }
+            _ => event,
+        }
+    }
+    fn fix(&self, data: &str) -> String;
+}
+
+/// Adjusts local links that turning `.md` extensions to `.html`.
+/// From `mdbook/src/utils/mod.rs`, where this is a private fn.
+struct LocalMdLinkFilter<'a> {
+    scheme_link: &'a Regex,
+    md_link: &'a Regex,
+}
+impl LocalMdLinkFilter<'_> {
+    fn new() -> Self {
+        static SCHEME_LINK: OnceCell<Regex> = OnceCell::new();
+        static MD_LINK: OnceCell<Regex> = OnceCell::new();
+        Self {
+            scheme_link: SCHEME_LINK.get_or_init(|| Regex::new(r"^[a-z][a-z0-9+.-]*:").unwrap()),
+            md_link: MD_LINK
+                .get_or_init(|| Regex::new(r"(?P<link>.*)\.md(?P<anchor>#.*)?").unwrap()),
+        }
+    }
+}
+impl LinkFilter for LocalMdLinkFilter<'_> {
+    fn fix(&self, dest: &str) -> String {
+        if !&self.scheme_link.is_match(dest) {
+            if let Some(caps) = &self.md_link.captures(dest) {
+                let mut fixed_link = String::new();
+                fixed_link.push_str(&caps["link"]);
+                fixed_link.push_str(".html");
+                if let Some(anchor) = caps.name("anchor") {
+                    fixed_link.push_str(anchor.as_str());
+                }
+                debug!("Filter link: {} -> {}", dest, fixed_link);
+                return fixed_link;
+            }
+        }
+        dest.to_string()
+    }
 }
 
 #[cfg(test)]
