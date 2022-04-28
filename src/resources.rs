@@ -1,8 +1,9 @@
 use html_parser::{Dom, Node};
 use mdbook::book::BookItem;
 use mdbook::renderer::RenderContext;
+use mdbook::utils::new_cmark_parser;
 use mime_guess::Mime;
-use pulldown_cmark::{Event, Options, Parser, Tag};
+use pulldown_cmark::{Event, Tag};
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::path::{Component, Path, PathBuf};
@@ -128,13 +129,7 @@ impl Asset {
 fn assets_in_markdown(src: &str) -> Result<Vec<String>, Error> {
     let mut found = Vec::new();
 
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_TABLES);
-    options.insert(Options::ENABLE_FOOTNOTES);
-    options.insert(Options::ENABLE_STRIKETHROUGH);
-    options.insert(Options::ENABLE_TASKLISTS);
-
-    let pulldown_parser = Parser::new_ext(src, options);
+    let pulldown_parser = new_cmark_parser(src, false);
 
     for event in pulldown_parser {
         match event {
