@@ -13,7 +13,8 @@ use handlebars::{Handlebars, RenderError};
 use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::renderer::RenderContext;
-use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
+use mdbook::utils::new_cmark_parser;
+use pulldown_cmark::{html, CowStr, Event, Tag};
 use serde_json::json;
 use url::Url;
 
@@ -165,15 +166,6 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
-    pub fn new_cmark_parser(text: &str) -> Parser<'_, '_> {
-        let mut opts = Options::empty();
-        opts.insert(Options::ENABLE_TABLES);
-        opts.insert(Options::ENABLE_FOOTNOTES);
-        opts.insert(Options::ENABLE_STRIKETHROUGH);
-        opts.insert(Options::ENABLE_TASKLISTS);
-        Parser::new_ext(text, opts)
-    }
-
     /// Render the chapter into its fully formed HTML representation.
     fn render_chapter(&self, ch: &Chapter) -> Result<String, RenderError> {
         let chapter_dir = if let Some(chapter_file_path) = &ch.path {
@@ -187,13 +179,10 @@ impl<'a> Generator<'a> {
             )));
         };
         let mut body = String::new();
-        let p = Generator::new_cmark_parser(&ch.content);
-        let mut quote_converter = EventQuoteConverter::new(self.config.curly_quotes);
+        let p = new_cmark_parser(&ch.content, self.config.curly_quotes);
         let ch_depth = chapter_dir.components().count();
         let asset_link_filter = AssetLinkFilter::new(&self.assets, ch_depth);
-        let events = p
-            .map(|event| quote_converter.convert(event))
-            .map(|event| asset_link_filter.apply(event));
+        let events = p.map(|event| asset_link_filter.apply(event));
 
         html::push_html(&mut body, events);
 
@@ -435,74 +424,6 @@ impl<'a> AssetLinkFilter<'a> {
     }
 }
 
-/// From `mdbook/src/utils/mod.rs`, where this is a private struct.
-struct EventQuoteConverter {
-    enabled: bool,
-    convert_text: bool,
-}
-
-impl EventQuoteConverter {
-    fn new(enabled: bool) -> Self {
-        EventQuoteConverter {
-            enabled,
-            convert_text: true,
-        }
-    }
-
-    fn convert<'a>(&mut self, event: Event<'a>) -> Event<'a> {
-        if !self.enabled {
-            return event;
-        }
-
-        match event {
-            Event::Start(Tag::CodeBlock(_)) => {
-                self.convert_text = false;
-                event
-            }
-            Event::End(Tag::CodeBlock(_)) => {
-                self.convert_text = true;
-                event
-            }
-            Event::Text(ref text) if self.convert_text => {
-                Event::Text(CowStr::from(convert_quotes_to_curly(text)))
-            }
-            _ => event,
-        }
-    }
-}
-
-fn convert_quotes_to_curly(original_text: &str) -> String {
-    // We'll consider the start to be "whitespace".
-    let mut preceded_by_whitespace = true;
-
-    original_text
-        .chars()
-        .map(|original_char| {
-            let converted_char = match original_char {
-                '\'' => {
-                    if preceded_by_whitespace {
-                        '‘'
-                    } else {
-                        '’'
-                    }
-                }
-                '"' => {
-                    if preceded_by_whitespace {
-                        '“'
-                    } else {
-                        '”'
-                    }
-                }
-                _ => original_char,
-            };
-
-            preceded_by_whitespace = original_char.is_whitespace();
-
-            converted_char
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod test {
     use mime_guess::mime;
@@ -591,7 +512,7 @@ mod test {
         );
 
         let filter = AssetLinkFilter::new(&assets, 0);
-        let parser = Parser::new(&markdown_str);
+        let parser = new_cmark_parser(&markdown_str, false);
         let events = parser.map(|ev| filter.apply(ev));
         let mut html_buf = String::new();
         html::push_html(&mut html_buf, events);
