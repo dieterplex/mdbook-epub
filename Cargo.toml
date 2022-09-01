@@ -27,6 +27,7 @@ epub-builder = {git = "https://github.com/dieterplex/epub-builder", tag = "v0.6.
 clap ={ version = "4.0", default-features = false, features = ["derive"]}
 thiserror = "1.0"
 pulldown-cmark = "0.9"
+sanitize-filename = "0.4"
 semver = "1.0"
 serde = "1.0"
 serde_derive = "1.0"
@@ -47,3 +48,4 @@ tempdir = "0.3.7"
 epub = "1.2"
 serial_test = "0.5"
 mockall = "0.11"
+relative-path = "1.7"
