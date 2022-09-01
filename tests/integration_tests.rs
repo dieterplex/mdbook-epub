@@ -1,10 +1,9 @@
-#[macro_use]
-extern crate log;
-
 use epub::doc::EpubDoc;
+use log::{debug, error};
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
 use mdbook_epub::Error;
+use relative_path::RelativePath;
 use serial_test::serial;
 use std::env;
 use std::fs::File;
@@ -155,6 +154,29 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
         debug!("got = {:?}", got.is_ok());
         assert!(got.is_ok(), "{}", &path.display().to_string());
     }
+}
+
+#[test]
+#[serial]
+fn render_only_draft_chapters_containing_sub() {
+    init_logging();
+    let (mut doc, _) = generate_epub().unwrap();
+    let items = vec![
+        ("Draft_sub.html", "Draft_sub"),
+        ("draft_1.html", "draft_1"),
+        ("draft/draft_2.html", "draft_2"),
+    ];
+    let oebps = RelativePath::new("OEBPS");
+    for it in items {
+        let path = oebps.join(it.0);
+        let got = doc.get_resource_by_path(path.as_str()).unwrap();
+        let content = String::from_utf8_lossy(got.as_ref());
+        let pat = format!("<title>{name}</title>", name = it.1);
+        assert!(&content.contains(&pat))
+    }
+    let path = oebps.join("Draft_simple.html");
+    let got = doc.get_resource_by_path(path.as_str());
+    assert!(got.is_err(), "should not embed draft chapter");
 }
 
 #[test]
