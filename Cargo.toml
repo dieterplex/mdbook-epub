@@ -23,7 +23,7 @@ name = "mdbook-epub"
 doc = false
 
 [dependencies]
-epub-builder = "0.5"
+epub-builder = {git = "https://github.com/dieterplex/epub-builder", tag = "v0.6.0"}
 anyhow = "1"
 thiserror = "1.0"
 pulldown-cmark = "0.9"
@@ -43,7 +43,7 @@ url = "2.2"
 ureq = "2.5"
 
 [dependencies.zip]
-version = "0.5"
+version = "0.6"
 default-features = false
 features = ["deflate"]
 
