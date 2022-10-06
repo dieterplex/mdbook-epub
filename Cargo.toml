@@ -24,6 +24,7 @@ doc = false
 
 [dependencies]
 epub-builder = "0.5"
+anyhow = "1"
 thiserror = "1.0"
 pulldown-cmark = "0.9"
 semver = "0.11"
@@ -40,6 +41,11 @@ toml = "0.5"
 html_parser = "0.6.2"
 url = "2.2"
 ureq = "2.5"
+
+[dependencies.zip]
+version = "0.5"
+default-features = false
+features = ["deflate"]
 
 [dev-dependencies]
 tempdir = "0.3.7"

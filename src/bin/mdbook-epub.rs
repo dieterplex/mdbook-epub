@@ -31,7 +31,7 @@ fn main() {
 fn run(args: &Args) -> Result<(), Error> {
     // get a `RenderContext`, either from stdin (because we're used as a plugin)
     // or by instrumenting MDBook directly (in standalone mode).
-    let ctx: RenderContext = if args.standalone {
+    if args.standalone {
         let error = format!(
             "book.toml root file is not found by a path {:?}",
             &args.root.display()
@@ -43,14 +43,17 @@ fn run(args: &Args) -> Result<(), Error> {
             destination.display()
         );
         debug!("EPUB book config is : {:?}", md.config);
-        RenderContext::new(md.root, md.book, md.config, destination)
+        if args.preprocess {
+            mdbook_epub::generate_with_preprocessor(&md, &destination)
+        } else {
+            let ctx = RenderContext::new(md.root, md.book, md.config, destination);
+            mdbook_epub::generate(&ctx)
+        }
     } else {
-        serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?
-    };
-
-    mdbook_epub::generate(&ctx)?;
-
-    Ok(())
+        let ctx: RenderContext =
+            serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?;
+        mdbook_epub::generate(&ctx)
+    }
 }
 
 #[derive(Debug, Clone, StructOpt)]
@@ -61,6 +64,12 @@ struct Args {
         help = "Run standalone (i.e. not as a mdbook plugin)"
     )]
     standalone: bool,
+    #[structopt(
+        short = "p",
+        long = "preprocess",
+        help = "Enable preprocessing for standalone mode."
+    )]
+    preprocess: bool,
     #[structopt(help = "The book to render.", parse(from_os_str), default_value = ".")]
     root: PathBuf,
 }
