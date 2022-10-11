@@ -11,6 +11,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  VERSION: "4.2.6"
+  EPUBCHECK: "https://github.com/w3c/epubcheck/releases/download"
 
 jobs:
   build:
@@ -28,3 +30,14 @@ jobs:
         run: cargo test --verbose
       - name: Check cargo clippy warnings
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # Test TRPL ePub
+      - name: Install nocomment preprocessor
+        run: cargo install mdbook-nocomment
+      - name: Run example program build_trpl
+        run: cargo run --example build_trpl -- --dest target/book target/book
+      - name: Install EPUBCheck
+        run: |
+          curl -L -o echeck.zip $EPUBCHECK/v$VERSION/epubcheck-$VERSION.zip
+          unzip echeck.zip
+      - name: Validate TRPL Epub
+        run: java -jar $GITHUB_WORKSPACE/epubcheck-$VERSION/epubcheck.jar -f "$GITHUB_WORKSPACE/target/book/The Rust Programming Language.epub"
