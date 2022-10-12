@@ -607,12 +607,10 @@ mod test {
                 <ul>\n\
                 <li><a href=\"{}\">link</a></li>\n\
                 <li><img src=\"{}\" alt=\"Local Image\" /></li>\n\
-                <li><img alt=\"Remote Image\" src=\"{}\" >\n\
+                <li><img alt=\"Remote Image\" src=\"cache/{}\" >\n\
                 </li>\n\
                 </ul>\n",
-                links[2],
-                links[0],
-                format!("cache/{}", hashed_filename)
+                links[2], links[0], hashed_filename
             )
         );
     }

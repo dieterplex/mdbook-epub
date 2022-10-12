@@ -37,11 +37,11 @@ fn generate_epub() -> Result<(EpubDoc, PathBuf), Error> {
     match EpubDoc::new(&output_file) {
         Ok(epub) => {
             let result: (EpubDoc, PathBuf) = (epub, output_file);
-            return Ok(result);
+            Ok(result)
         }
         Err(err) => {
             error!("dummy book creation error = {}", err);
-            return Err(Error::EpubDocCreate(output_file.display().to_string()))?;
+            Err(Error::EpubDocCreate(output_file.display().to_string()))?
         }
     }
 }
@@ -103,12 +103,11 @@ fn look_for_chapter_1_heading() {
     let mut doc = generate_epub().unwrap();
     debug!("doc current path = {:?}", doc.1);
 
-    let path;
-    if cfg!(target_os = "linux") {
-        path = Path::new("OEBPS").join("chapter_1.html"); // linux
+    let path = if cfg!(target_os = "linux") {
+        Path::new("OEBPS").join("chapter_1.html") // linux
     } else {
-        path = Path::new("OEBPS/chapter_1.html").to_path_buf(); // windows with 'forward slash' /
-    }
+        Path::new("OEBPS/chapter_1.html").to_path_buf() // windows with 'forward slash' /
+    };
     debug!("short path = {:?}", path.display().to_string());
     debug!("full path = {:?}", &doc.1);
     let file = doc.0.get_resource_str_by_path(path);
@@ -134,12 +133,11 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
     );
 
     for chapter in chapters {
-        let path;
-        if cfg!(target_os = "windows") {
-            path = Path::new("OEBPS/").join(chapter); // windows with 'forward slash' /
+        let path = if cfg!(target_os = "windows") {
+            Path::new("OEBPS/").join(chapter) // windows with 'forward slash' /
         } else {
-            path = Path::new("OEBPS").join(chapter); // linux
-        }
+            Path::new("OEBPS").join(chapter) // linux
+        };
         // let path = path.display().to_string();
         debug!("path = {}", &path.display().to_string());
         let got = doc.0.get_resource_by_path(&path);
@@ -156,12 +154,11 @@ fn straight_quotes_transformed_into_curly_quotes() {
     let mut doc = generate_epub().unwrap();
     debug!("doc current path = {:?}", doc.1);
 
-    let path;
-    if cfg!(target_os = "linux") {
-        path = Path::new("OEBPS").join("chapter_1.html"); // linux
+    let path = if cfg!(target_os = "linux") {
+        Path::new("OEBPS").join("chapter_1.html") // linux
     } else {
-        path = Path::new("OEBPS/chapter_1.html").to_path_buf(); // windows with 'forward slash' /
-    }
+        Path::new("OEBPS/chapter_1.html").to_path_buf() // windows with 'forward slash' /
+    };
     let file = doc.0.get_resource_str_by_path(path);
     let content = file.unwrap();
     debug!("content = {:?}", content);

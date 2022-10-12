@@ -5,7 +5,7 @@ use std::path::PathBuf;
 pub const DEFAULT_TEMPLATE: &str = include_str!("index.hbs");
 
 /// The configuration struct used to tweak how an EPUB document is generated.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct Config {
     /// A list of additional stylesheets to include in the document.
