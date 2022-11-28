@@ -1,10 +1,5 @@
-use ::env_logger;
 #[macro_use]
 extern crate log;
-use ::mdbook;
-use ::mdbook_epub;
-use ::serde_json;
-use ::structopt;
 
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;

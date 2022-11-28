@@ -1,6 +1,8 @@
-use super::Error;
 use mdbook::renderer::RenderContext;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use crate::Error;
 
 pub const DEFAULT_TEMPLATE: &str = include_str!("index.hbs");
 

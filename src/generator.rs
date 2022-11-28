@@ -14,6 +14,7 @@ use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::renderer::RenderContext;
 use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
+use serde_json::json;
 use url::Url;
 
 use crate::config::Config;
@@ -278,7 +279,7 @@ impl<'a> Generator<'a> {
 
             let content = File::open(&full_path).map_err(|_| Error::AssetOpen)?;
             debug!("Adding resource: {:?} / {:?} ", path, mt.to_string());
-            self.builder.add_resource(&path, content, mt.to_string())?;
+            self.builder.add_resource(path, content, mt.to_string())?;
         }
 
         Ok(())
@@ -311,7 +312,7 @@ impl<'a> Generator<'a> {
             let content = File::open(&full_path).map_err(|_| Error::AssetOpen)?;
             debug!("Adding cover image: {:?} / {:?} ", path, mt.to_string());
             self.builder
-                .add_cover_image(&path, content, mt.to_string())?;
+                .add_cover_image(path, content, mt.to_string())?;
         }
 
         Ok(())

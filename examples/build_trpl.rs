@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
     let mut buf: Vec<u8> = Vec::with_capacity(BOOK_BUF_SIZE);
     resp.into_reader().read_to_end(&mut buf)?;
     let mut archive = zip::ZipArchive::new(Cursor::new(buf))?;
-    extract(&mut archive, &book_root)?;
+    extract(&mut archive, book_root)?;
 
     std::env::set_var(BOOK_PREPROCESSOR, "");
     let md = mdbook::MDBook::load(book_root)
@@ -71,7 +71,7 @@ fn extract<R: Read + Seek, P: AsRef<Path>>(
         } else {
             if let Some(p) = outpath.parent() {
                 if !p.exists() {
-                    fs::create_dir_all(&p)?;
+                    fs::create_dir_all(p)?;
                 }
             }
             let mut outfile = fs::File::create(&outpath)?;

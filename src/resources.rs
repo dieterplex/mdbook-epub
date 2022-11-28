@@ -106,7 +106,7 @@ impl Asset {
         if !absolute_location.is_file() {
             return Err(Error::AssetFile(absolute_location));
         }
-        let filename = absolute_location.strip_prefix(&src_dir).unwrap();
+        let filename = absolute_location.strip_prefix(src_dir).unwrap();
         let asset = Asset::new(
             filename,
             &absolute_location,
@@ -233,10 +233,10 @@ pub(crate) mod handler {
                     debug!("Cache file {:?} to {} already exists.", dest, url);
                 } else {
                     if let Some(cache_dir) = dest.parent() {
-                        fs::create_dir_all(&cache_dir)?;
+                        fs::create_dir_all(cache_dir)?;
                     }
                     debug!("Downloading asset : {}", url);
-                    let mut file = OpenOptions::new().create(true).write(true).open(&dest)?;
+                    let mut file = OpenOptions::new().create(true).write(true).open(dest)?;
                     let resp = ureq::get(url.as_str()).call()?;
                     io::copy(&mut resp.into_reader(), &mut file)?;
                 }

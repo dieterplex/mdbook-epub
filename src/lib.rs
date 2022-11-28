@@ -1,16 +1,6 @@
 //! A `mdbook` backend for generating a book in the `EPUB` format.
-
-use ::epub_builder;
-use ::handlebars;
-use ::thiserror::Error;
 #[macro_use]
 extern crate log;
-use ::mdbook;
-use ::semver;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
 
 use mdbook::config::Config as MdConfig;
 use mdbook::renderer::RenderContext;
@@ -18,6 +8,7 @@ use mdbook::MDBook;
 use semver::{Version, VersionReq};
 use std::fs::{create_dir_all, File};
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 mod config;
 mod generator;
@@ -73,9 +64,7 @@ pub enum Error {
     #[error(transparent)]
     Book(#[from] mdbook::errors::Error),
     #[error(transparent)]
-    Semver(#[from] semver::SemVerError),
-    #[error(transparent)]
-    SemverReqParse(#[from] semver::ReqParseError),
+    Semver(#[from] semver::Error),
     #[error(transparent)]
     EpubBuilder(#[from] epub_builder::Error),
     #[error(transparent)]
