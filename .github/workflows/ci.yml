@@ -13,6 +13,7 @@ env:
   CARGO_TERM_COLOR: always
   VERSION: "4.2.6"
   EPUBCHECK: "https://github.com/w3c/epubcheck/releases/download"
+  BINST: "https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz"
 
 jobs:
   build:
@@ -27,12 +28,12 @@ jobs:
       - name: Build
         run: cargo build
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test
       - name: Check cargo clippy warnings
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       # Test TRPL ePub
       - name: Install nocomment preprocessor
-        run: cargo install mdbook-nocomment
+        run: curl -L $BINST | tar zxf - -C ~/.cargo/bin/ && cargo binstall --no-confirm mdbook-nocomment
       - name: Run example program build_trpl
         run: cargo run --example build_trpl -- --dest target/book target/book
       - name: Install EPUBCheck
