@@ -108,7 +108,10 @@ impl Asset {
         }
         // Use filename as embedded file path with content from absolute_location.
         let filename = if full_filename.is_symlink() {
-            debug!("Strip symlinked asset '{:?}' prefix without canonicalized path.", &relative_link);
+            debug!(
+                "Strip symlinked asset '{:?}' prefix without canonicalized path.",
+                &relative_link
+            );
             full_filename.strip_prefix(src_dir).unwrap()
         } else {
             absolute_location.strip_prefix(src_dir).unwrap()
