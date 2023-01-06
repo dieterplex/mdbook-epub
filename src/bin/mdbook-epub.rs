@@ -1,19 +1,19 @@
 #[macro_use]
 extern crate log;
 
+use clap::{value_parser, Parser};
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
 use std::io;
 use std::path::PathBuf;
 use std::process;
-use structopt::StructOpt;
 
 use mdbook_epub::Error;
 
 fn main() {
     env_logger::init();
     info!("Booting EPUB generator...");
-    let args = Args::from_args();
+    let args = Args::parse();
     debug!("generator args = {:?}", args);
 
     if let Err(e) = run(&args) {
@@ -51,20 +51,21 @@ fn run(args: &Args) -> Result<(), Error> {
     }
 }
 
-#[derive(Debug, Clone, StructOpt)]
+#[derive(Debug, Clone, Parser)]
+#[command(author, version, about, long_about = None)]
 struct Args {
-    #[structopt(
-        short = "s",
+    #[arg(
+        short = 's',
         long = "standalone",
         help = "Run standalone (i.e. not as a mdbook plugin)"
     )]
     standalone: bool,
-    #[structopt(
-        short = "p",
+    #[arg(
+        short = 'p',
         long = "preprocess",
         help = "Enable preprocessing for standalone mode."
     )]
     preprocess: bool,
-    #[structopt(help = "The book to render.", parse(from_os_str), default_value = ".")]
+    #[arg(help = "The book to render.", value_parser = value_parser!(PathBuf), default_value = ".")]
     root: PathBuf,
 }
