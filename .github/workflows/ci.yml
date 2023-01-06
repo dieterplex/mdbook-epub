@@ -33,7 +33,12 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       # Test TRPL ePub
       - name: Install nocomment preprocessor
-        run: curl -L $BINST | tar zxf - -C ~/.cargo/bin/ && cargo binstall --no-confirm mdbook-nocomment
+        run: |
+          if ! [ -x "$(command -v cargo-binstall)" ]; then
+            curl -L $BINST | tar zxf - -C ~/.cargo/bin/
+          fi
+          # force to re-symlink the binary or it wouldn't be found
+          cargo binstall --no-confirm --force mdbook-nocomment
       - name: Run example program build_trpl
         run: cargo run --example build_trpl -- --dest target/book target/book
       - name: Install EPUBCheck
