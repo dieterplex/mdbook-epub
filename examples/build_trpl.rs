@@ -10,9 +10,9 @@
 //! cargo run --example build_trpl -- --dest . book/
 //! ```
 
+use clap::{value_parser, Parser};
 use std::io::{self, Cursor, Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
 // Inject config value to activate the preprocessor `nocomment` with this env var.
 // See https://rust-lang.github.io/mdBook/format/configuration/environment-variables.html
@@ -21,9 +21,17 @@ const BOOK_ARCHIVE_URL: &str = "https://github.com/rust-lang/book/archive/refs/h
 const BOOK_BUF_SIZE: usize = 4 * 1024 * 1024;
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::from_args();
-    let dest = args.dest.as_path();
-    let book_root = args.root.as_path();
+    let cli = Cli::parse();
+    let dest = cli.dest.as_path();
+    let book_root = cli.root.as_path();
+    let level = match cli.verbose {
+        0 => log::Level::Info,
+        1 => log::Level::Debug,
+        _ => log::Level::Trace,
+    };
+    env_logger::Builder::new()
+        .filter_level(level.to_level_filter())
+        .init();
 
     // Download & extract
     let resp = ureq::get(BOOK_ARCHIVE_URL).call()?;
@@ -89,14 +97,16 @@ fn extract<R: Read + Seek, P: AsRef<Path>>(
     Ok(())
 }
 
-#[derive(Debug, Clone, StructOpt)]
-struct Args {
-    #[structopt(
+#[derive(Debug, Clone, Parser)]
+struct Cli {
+    #[arg(
         help = "The book to render.",
-        parse(from_os_str),
+        value_parser = value_parser!(PathBuf),
         default_value = "book/"
     )]
     root: PathBuf,
-    #[structopt(short, long, default_value = "target/book/")]
+    #[arg(short, long, default_value = "target/book/")]
     dest: PathBuf,
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    verbose: u8,
 }
