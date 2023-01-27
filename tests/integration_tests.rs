@@ -27,7 +27,21 @@ fn generate_epub() -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
     let (ctx, _md, temp) = create_dummy_book().unwrap();
     debug!("temp dir = {:?}", &temp);
     mdbook_epub::generate(&ctx)?;
-    let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
+    ensure_epub_opened(temp.path(), &ctx.config)
+}
+
+fn generate_epub_preprocessed() -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
+    let (_, md, temp) = create_dummy_book().unwrap();
+    debug!("temp dir = {:?}", &temp);
+    mdbook_epub::generate_with_preprocessor(&md, temp.path())?;
+    ensure_epub_opened(temp.path(), &md.config)
+}
+
+fn ensure_epub_opened(
+    dest: &Path,
+    config: &mdbook::Config,
+) -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
+    let output_file = mdbook_epub::output_filename(dest, config);
     debug!("output_file = {:?}", &output_file.display());
 
     // let output_file_name = output_file.display().to_string();
@@ -97,7 +111,7 @@ fn epub_check(path: &Path) -> Result<(), Error> {
 fn look_for_chapter_1_heading() {
     init_logging();
     debug!("look_for_chapter_1_heading...");
-    let mut doc = generate_epub().unwrap();
+    let mut doc = generate_epub_preprocessed().unwrap();
     debug!("doc current path = {:?}", doc.1);
 
     let path = if cfg!(target_os = "linux") {
@@ -112,8 +126,8 @@ fn look_for_chapter_1_heading() {
     let content = file.unwrap();
     debug!("content = {:?}", content.len());
     assert!(content.contains("<h1>Chapter 1</h1>"));
-    // assert!(!content.contains("{{#rustdoc_include")); // prepare fix link error
-    // assert!(content.contains("fn main() {")); // prepare fix link error
+    assert!(!content.contains("{{#rustdoc_include"));
+    assert!(content.contains("fn main() {"));
 }
 
 #[test]
