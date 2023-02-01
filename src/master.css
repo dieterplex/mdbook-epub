@@ -430,6 +430,10 @@ table tbody tr td code {
     text-decoration: none;
 }
 
+.noteref {
+    font-size: 0.75em;
+    vertical-align: super;
+}
 
 /*==DROP CAPS==*/
 

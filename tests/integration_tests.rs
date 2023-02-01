@@ -74,6 +74,7 @@ fn output_epub_is_valid() {
 
     // also try to run epubcheck, if it's available
     epub_check(&output_file).unwrap();
+    std::fs::copy(&output_file, Path::new("target").join("book.epub")).unwrap();
 }
 
 fn epub_check(path: &Path) -> Result<(), Error> {

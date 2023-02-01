@@ -118,9 +118,11 @@ where
                 }
                 FootnoteReference(name) => {
                     let len = self.numbers.len() + 1;
-                    self.write("<sup class=\"footnote-reference\"><a href=\"#")?;
+                    self.write("<sup class=\"footnote-reference\"><a epub:type=\"noteref\" class=\"noteref\" rel=\"footnote\" href=\"#")?;
                     escape_html(&mut self.writer, &name)?;
-                    self.write("\">")?;
+                    self.write("\" id=\"")?;
+                    escape_html(&mut self.writer, &name)?;
+                    self.write("_ref\">")?;
                     let number = *self.numbers.entry(name).or_insert(len);
                     write!(&mut self.writer, "{number}")?;
                     self.write("</a></sup>")?;
@@ -289,16 +291,18 @@ where
             }
             Tag::FootnoteDefinition(name) => {
                 if self.end_newline {
-                    self.write("<div class=\"footnote-definition\" id=\"")?;
+                    self.write("<aside class=\"footnote-definition footnote\" epub:type=\"footnote\" id=\"")?;
                 } else {
-                    self.write("\n<div class=\"footnote-definition\" id=\"")?;
+                    self.write("\n<aside class=\"footnote-definition footnote\" epub:type=\"footnote\" id=\"")?;
                 }
                 escape_html(&mut self.writer, &name)?;
-                self.write("\"><sup class=\"footnote-definition-label\">")?;
+                self.write("\"><sup class=\"footnote-definition-label\"><a href=\"#")?;
+                escape_html(&mut self.writer, &name)?;
+                self.write("_ref\">")?;
                 let len = self.numbers.len() + 1;
                 let number = *self.numbers.entry(name).or_insert(len);
                 write!(&mut self.writer, "{number}")?;
-                self.write("</sup>")
+                self.write("</a></sup>")
             }
         }
     }
@@ -363,7 +367,7 @@ where
             }
             Tag::Image(_, _, _) => (), // shouldn't happen, handled in start
             Tag::FootnoteDefinition(_) => {
-                self.write("</div>\n")?;
+                self.write("</aside>\n")?;
             }
         }
         Ok(())
