@@ -94,15 +94,14 @@ impl Asset {
         let full_path = src_dir.join(chapter_path);
         let asset_path = full_path.parent().ok_or_else(|| {
             Error::AssetFileNotFound(format!(
-                "All book chapters have a parent directory: {:?}",
-                full_path
+                "All book chapters have a parent directory: {full_path:?}"
             ))
         })?;
         let relative_link = PathBuf::from(link);
         let full_filename = asset_path.join(&relative_link);
         let absolute_location = full_filename
             .canonicalize()
-            .map_err(|_| Error::AssetFileNotFound(format!("Asset was not found: {}", link)))?;
+            .map_err(|_| Error::AssetFileNotFound(format!("Asset was not found: {link}")))?;
         if !absolute_location.is_file() {
             return Err(Error::AssetFile(absolute_location));
         }

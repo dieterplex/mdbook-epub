@@ -48,11 +48,10 @@ fn main() -> anyhow::Result<()> {
     match mdbook_epub::generate_with_preprocessor(&md, dest) {
         Ok(_) => writeln!(
             &mut io::stderr(),
-            "Successfully wrote epub document to {:?}!",
-            outfile,
+            "Successfully wrote epub document to {outfile:?}!"
         )
         .unwrap(),
-        Err(err) => writeln!(&mut io::stderr(), "Error: {}", err).unwrap(),
+        Err(err) => writeln!(&mut io::stderr(), "Error: {err}").unwrap(),
     };
     Ok(())
 }
