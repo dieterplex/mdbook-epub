@@ -1,0 +1,38 @@
+name: TRPL
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: short
+  VERSION: "5.0.0"
+  EPUBCHECK: "https://github.com/w3c/epubcheck/releases/download"
+  BINST: "https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz"
+
+jobs:
+  trpl:
+    name: Build TRPL ePub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup | Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install nocomment preprocessor
+        run: |
+          if ! [ -x "$(command -v cargo-binstall)" ]; then
+            curl -L $BINST | tar zxf - -C ~/.cargo/bin/
+          fi
+          # force to re-symlink the binary or it wouldn't be found
+          cargo binstall --no-confirm --force mdbook-nocomment
+      - name: Run example program build_trpl
+        run: cargo run --example build_trpl -- --dest target/book target/book
+      - name: Install EPUBCheck
+        run: |
+          curl -L -o echeck.zip $EPUBCHECK/v$VERSION/epubcheck-$VERSION.zip
+          unzip echeck.zip
+      - name: Validate TRPL Epub
+        run: java -jar $GITHUB_WORKSPACE/epubcheck-$VERSION/epubcheck.jar -f "$GITHUB_WORKSPACE/target/book/The Rust Programming Language.epub"
