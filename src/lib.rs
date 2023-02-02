@@ -1,3 +1,5 @@
+#![allow(clippy::result_large_err)]
+
 //! A `mdbook` backend for generating a book in the `EPUB` format.
 #[macro_use]
 extern crate log;
@@ -82,7 +84,7 @@ pub const MDBOOK_VERSION: &str = mdbook::MDBOOK_VERSION;
 /// backend.
 fn version_check(ctx: &RenderContext) -> Result<(), Error> {
     let provided_version = Version::parse(&ctx.version)?;
-    let required_version = VersionReq::parse(&format!("~{}", MDBOOK_VERSION))?;
+    let required_version = VersionReq::parse(&format!("~{MDBOOK_VERSION}"))?;
 
     if !required_version.matches(&provided_version) {
         Err(Error::IncompatibleVersion(
