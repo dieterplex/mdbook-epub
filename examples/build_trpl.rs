@@ -20,7 +20,7 @@ const BOOK_PREPROCESSOR: &str = "MDBOOK_PREPROCESSOR__NOCOMMENT";
 const BOOK_ARCHIVE_URL: &str = "https://github.com/rust-lang/book/archive/refs/heads/main.zip";
 const BOOK_BUF_SIZE: usize = 4 * 1024 * 1024;
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<(), Error> {
     let cli = Cli::parse();
     let dest = cli.dest.as_path();
     let book_root = cli.root.as_path();
@@ -41,8 +41,7 @@ fn main() -> anyhow::Result<()> {
     extract(&mut archive, book_root)?;
 
     std::env::set_var(BOOK_PREPROCESSOR, "");
-    let md = mdbook::MDBook::load(book_root)
-        .map_err(|e| anyhow::anyhow!("Could not load mdbook: {}", e))?;
+    let md = mdbook::MDBook::load(book_root)?;
     let outfile = mdbook_epub::output_filename(dest, &md.config);
 
     match mdbook_epub::generate_with_preprocessor(&md, dest) {
@@ -60,7 +59,7 @@ fn main() -> anyhow::Result<()> {
 fn extract<R: Read + Seek, P: AsRef<Path>>(
     archive: &mut zip::ZipArchive<R>,
     directory: P,
-) -> anyhow::Result<()> {
+) -> Result<(), Error> {
     use std::fs;
     const ZIP_PREFIX: &str = "book-main";
 
@@ -69,7 +68,8 @@ fn extract<R: Read + Seek, P: AsRef<Path>>(
         let filepath = file
             .enclosed_name()
             .ok_or(zip::result::ZipError::InvalidArchive("Invalid file path"))?
-            .strip_prefix(ZIP_PREFIX)?;
+            .strip_prefix(ZIP_PREFIX)
+            .expect("Unexpected prefix to strip in Zip file");
 
         let outpath = directory.as_ref().join(filepath);
 
@@ -108,4 +108,31 @@ struct Cli {
     dest: PathBuf,
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
+}
+
+#[derive(thiserror::Error, Debug)]
+enum Error {
+    #[error(transparent)]
+    Book(#[from] mdbook::errors::Error),
+
+    #[error(transparent)]
+    EPubError(#[from] mdbook_epub::Error),
+
+    #[error(transparent)]
+    HttpError(#[from] Box<ureq::Error>),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    StripPathPrefix(#[from] std::path::StripPrefixError),
+
+    #[error(transparent)]
+    ZipError(#[from] zip::result::ZipError),
+}
+
+impl From<ureq::Error> for Error {
+    fn from(ue: ureq::Error) -> Self {
+        Error::HttpError(Box::new(ue))
+    }
 }

@@ -598,7 +598,6 @@ dependencies = [
 name = "mdbook-epub"
 version = "0.4.25"
 dependencies = [
- "anyhow",
  "clap",
  "env_logger",
  "epub",

@@ -24,7 +24,6 @@ doc = false
 
 [dependencies]
 epub-builder = {git = "https://github.com/dieterplex/epub-builder", tag = "v0.6.0"}
-anyhow = "1"
 clap ={ version = "4.0", default-features = false, features = ["derive"]}
 thiserror = "1.0"
 pulldown-cmark = "0.9"
@@ -41,11 +40,7 @@ toml = "0.5"
 html_parser = "0.6.2"
 url = "2.3"
 ureq = "2.5"
-
-[dependencies.zip]
-version = "0.6"
-default-features = false
-features = ["deflate"]
+zip = { version = "0.6", default-features = false, features = ["deflate"]}
 
 [dev-dependencies]
 tempdir = "0.3.7"
