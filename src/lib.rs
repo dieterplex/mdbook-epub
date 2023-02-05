@@ -144,6 +144,8 @@ impl mdbook::Renderer for EpubRenderer {
         trace!("ctx={:?}, new dest={:?}", &ctx, &self.0);
         let mut ctx = ctx.to_owned();
         ctx.destination = self.0.to_owned();
-        generate(&ctx).map_err(|e| anyhow::anyhow!("Error generating book: {:?}", e))
+        generate(&ctx)?;
+
+        Ok(())
     }
 }
