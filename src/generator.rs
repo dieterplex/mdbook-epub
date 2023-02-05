@@ -374,9 +374,8 @@ impl<'a> AssetLinkFilter<'a> {
                             Node::Element(ref element) if element.name == "img" => {
                                 if let Some(dest) = &element.attributes["src"] {
                                     if Url::parse(dest).is_ok() {
+                                        debug!("Found a valid remote img src:\"{}\".", dest);
                                         found.push(dest.to_owned());
-                                    } else {
-                                        debug!("img src:\"{}\" is not a valid URL.", dest)
                                     }
                                 }
                             }
@@ -425,7 +424,7 @@ impl<'a> AssetLinkFilter<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use mime_guess::mime;
     use std::path::Path;
 
