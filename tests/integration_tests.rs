@@ -38,7 +38,7 @@ fn generate_epub() -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
         }
         Err(err) => {
             error!("dummy book creation error = {}", err);
-            Err(Error::EpubDocCreate(output_file.display().to_string()))?
+            Err(Error::EpubDocCreate(output_file.display().to_string()))
         }
     }
 }

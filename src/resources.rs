@@ -250,8 +250,7 @@ pub(crate) mod handler {
             match res.status() {
                 200 => Ok(res.into_reader()),
                 404 => Err(Error::AssetFileNotFound(format!(
-                    "Missing remote resource: {}",
-                    url
+                    "Missing remote resource: {url}"
                 ))),
                 _ => unreachable!("Unexpected response status"),
             }
@@ -293,8 +292,7 @@ pub(crate) mod handler {
             impl ContentRetriever for TestHandler {
                 fn retrieve(&self, url: &str) -> Result<BoxRead, Error> {
                     Err(Error::AssetFileNotFound(format!(
-                        "Missing remote resource: {}",
-                        url
+                        "Missing remote resource: {url}",
                     )))
                 }
             }
@@ -330,7 +328,7 @@ pub(crate) mod handler {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use serde_json::{json, Value};
 
     use super::*;
@@ -422,7 +420,7 @@ mod test {
     }
 
     #[test]
-    fn find_darft_chapter_without_error() {
+    fn find_draft_chapter_without_error() {
         let temp = tempdir::TempDir::new("mdbook-epub").unwrap();
         let dest_dir = temp.into_path().to_string_lossy().to_string();
         let chapters = json!([
