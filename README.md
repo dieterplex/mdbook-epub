@@ -10,7 +10,7 @@ file, suitable for viewing on e-readers and other similar devices.
 
 > **WARNING:** Not yet production ready. May eat your laundry.
 
-> **Note:** At the moment the default stylesheet is quite bare bones, serving 
+> **Note:** At the moment the default stylesheet is quite bare bones, serving
   mainly to reset the styling used on various devices back to a known default.
   This default isn't overly pretty, so you may want to include your own
   stylesheets.
@@ -24,8 +24,8 @@ Before you can use the EPUB backend, you'll need to actually install it:
 $ cargo install mdbook-epub
 ```
 
-Next you need to let `mdbook` know to use the alternate renderer by updating 
-your `book.toml` file. This is done by simply adding an empty `output.epub` 
+Next you need to let `mdbook` know to use the alternate renderer by updating
+your `book.toml` file. This is done by simply adding an empty `output.epub`
 table.
 
 ```diff
@@ -40,8 +40,8 @@ mathjax-support = true
 + [output.epub]
 ```
 
-Now everything is set up, just run `mdbook` as normal and the output directory 
-(`book/epub/` by default) should now contain an extra file called 
+Now everything is set up, just run `mdbook` as normal and the output directory
+(`book/epub/` by default) should now contain an extra file called
 `mdBook Documentation.epub` (substituting in whatever your book's title is).
 
 The `mdbook-epub` executable can be run in "standalone" mode. This is where
@@ -104,8 +104,8 @@ list is by no means complete, so feature requests are most welcome!
 
 ## Contributing
 
-This backend is still very much in the development phase and as such a large 
-number of features are missing. If you think of something you'd like please 
+This backend is still very much in the development phase and as such a large
+number of features are missing. If you think of something you'd like please
 create an issue on the [issue tracker]!
 
 
