@@ -13,10 +13,11 @@ use handlebars::{Handlebars, RenderError};
 use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::renderer::RenderContext;
-use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
+use pulldown_cmark::{CowStr, Event, Options, Parser, Tag};
 use url::Url;
 
 use crate::config::Config;
+use crate::html;
 use crate::resources::handler::{ContentRetriever, ResourceHandler};
 use crate::resources::{self, Asset};
 use crate::Error;

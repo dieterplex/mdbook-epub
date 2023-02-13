@@ -20,6 +20,7 @@ use std::path::{Path, PathBuf};
 
 mod config;
 mod generator;
+mod html;
 mod resources;
 
 pub use crate::config::Config;

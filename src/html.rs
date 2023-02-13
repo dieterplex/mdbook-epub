@@ -18,15 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-//! HTML renderer that takes an iterator of events as input.
+//! Forked HTML renderer that takes an iterator of events as input for ePub.
 
 use std::collections::HashMap;
 use std::io::{self, Write};
 
-use crate::escape::{escape_href, escape_html, StrWrite, WriteWrapper};
-use crate::strings::CowStr;
-use crate::Event::*;
-use crate::{Alignment, CodeBlockKind, Event, LinkType, Tag};
+use pulldown_cmark::escape::{escape_href, escape_html, StrWrite, WriteWrapper};
+use pulldown_cmark::Event::*;
+use pulldown_cmark::{Alignment, CodeBlockKind, CowStr, Event, LinkType, Tag};
 
 enum TableState {
     Head,
@@ -123,7 +122,7 @@ where
                     escape_html(&mut self.writer, &name)?;
                     self.write("\">")?;
                     let number = *self.numbers.entry(name).or_insert(len);
-                    write!(&mut self.writer, "{}", number)?;
+                    write!(&mut self.writer, "{number}")?;
                     self.write("</a></sup>")?;
                 }
                 TaskListMarker(true) => {
@@ -154,7 +153,7 @@ where
                 } else {
                     self.write("\n<")?;
                 }
-                write!(&mut self.writer, "{}", level)?;
+                write!(&mut self.writer, "{level}")?;
                 if let Some(id) = id {
                     self.write(" id=\"")?;
                     escape_html(&mut self.writer, id)?;
@@ -239,7 +238,7 @@ where
                 } else {
                     self.write("\n<ol start=\"")?;
                 }
-                write!(&mut self.writer, "{}", start)?;
+                write!(&mut self.writer, "{start}")?;
                 self.write("\">\n")
             }
             Tag::List(None) => {
@@ -294,11 +293,11 @@ where
                 } else {
                     self.write("\n<div class=\"footnote-definition\" id=\"")?;
                 }
-                escape_html(&mut self.writer, &*name)?;
+                escape_html(&mut self.writer, &name)?;
                 self.write("\"><sup class=\"footnote-definition-label\">")?;
                 let len = self.numbers.len() + 1;
                 let number = *self.numbers.entry(name).or_insert(len);
-                write!(&mut self.writer, "{}", number)?;
+                write!(&mut self.writer, "{number}")?;
                 self.write("</sup>")
             }
         }
@@ -311,7 +310,7 @@ where
             }
             Tag::Heading(level, _id, _classes) => {
                 self.write("</")?;
-                write!(&mut self.writer, "{}", level)?;
+                write!(&mut self.writer, "{level}")?;
                 self.write(">\n")?;
             }
             Tag::Table(_) => {
@@ -392,7 +391,7 @@ where
                 FootnoteReference(name) => {
                     let len = self.numbers.len() + 1;
                     let number = *self.numbers.entry(name).or_insert(len);
-                    write!(&mut self.writer, "[{}]", number)?;
+                    write!(&mut self.writer, "[{number}]")?;
                 }
                 TaskListMarker(true) => self.write("[x]")?,
                 TaskListMarker(false) => self.write("[ ]")?,
@@ -469,6 +468,7 @@ where
 /// </ul>
 /// "#);
 /// ```
+#[allow(dead_code)]
 pub fn write_html<'a, I, W>(writer: W, iter: I) -> io::Result<()>
 where
     I: Iterator<Item = Event<'a>>,
