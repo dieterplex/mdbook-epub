@@ -16,4 +16,3 @@ repos:
     -   id: clippy
         args: ['--verbose', '--locked', '--', '-D', 'clippy::all']
     -   id: fmt
-        args: ['--verbose', '--all']
