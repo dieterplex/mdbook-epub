@@ -170,11 +170,15 @@ pub(crate) fn hash_link(url: &Url) -> String {
     let mut hasher = DefaultHasher::new();
     url.hash(&mut hasher);
     let path = PathBuf::from(url.path());
-    let ext = path
-        .extension()
-        .and_then(OsStr::to_str)
-        .unwrap_or_else(|| panic!("Unable to extract file ext from {url}"));
-    format!("{:x}.{}", hasher.finish(), ext)
+    let ext = path.extension().and_then(OsStr::to_str).unwrap_or_else(|| {
+        debug!("Unable to extract file ext from {}", url);
+        ""
+    });
+    if ext.is_empty() {
+        format!("{:x}", hasher.finish())
+    } else {
+        format!("{:x}.{}", hasher.finish(), ext)
+    }
 }
 
 // From cargo/util/paths.rs
