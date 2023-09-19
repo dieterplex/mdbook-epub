@@ -100,7 +100,8 @@ fn epub_check(path: &Path) -> Result<(), Error> {
         }
         Err(_) => {
             // failed to launch epubcheck, it's probably not installed
-            Ok(())
+            debug!("Failed to launch epubcheck, it's probably not installed here...");
+            Err(Error::EpubCheck)
         }
     }
 }
