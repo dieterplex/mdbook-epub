@@ -1,4 +1,4 @@
-use html_parser::{Dom, Node};
+use html_parser::{Dom, Element, Node};
 use mdbook::book::BookItem;
 use mdbook::renderer::RenderContext;
 use mdbook::utils::new_cmark_parser;
@@ -29,7 +29,7 @@ pub(crate) fn find(ctx: &RenderContext) -> Result<HashMap<String, Asset>, Error>
                     debug!("{} is a draft chapter and should be no content.", ch.name);
                     continue;
                 }
-                for link in assets_in_markdown(&ch.content)? {
+                for link in find_assets_in_markdown(&ch.content)? {
                     let asset = match Url::parse(&link) {
                         Ok(url) => Asset::from_url(url, &ctx.destination),
                         Err(_) => Asset::from_local(&link, &src_dir, ch.path.as_ref().unwrap()),
@@ -125,28 +125,43 @@ impl Asset {
     }
 }
 
-fn assets_in_markdown(src: &str) -> Result<Vec<String>, Error> {
-    let mut found = Vec::new();
+// Look up resources in nested HTML element
+fn find_assets_in_nested_html_tags(element: &Element) -> Result<Vec<String>, Error> {
+    let mut found_asset = Vec::new();
 
-    let pulldown_parser = new_cmark_parser(src, false);
+    if element.name == "img" {
+        if let Some(dest) = &element.attributes["src"] {
+            found_asset.push(dest.clone());
+        }
+    }
+    for item in &element.children {
+        if let Node::Element(ref nested_element) = item {
+            found_asset.extend(find_assets_in_nested_html_tags(nested_element)?.into_iter());
+        }
+    }
+
+    Ok(found_asset)
+}
+
+// Look up resources in chapter md content
+fn find_assets_in_markdown(chapter_src_content: &str) -> Result<Vec<String>, Error> {
+    let mut found_asset = Vec::new();
+
+    let pulldown_parser = new_cmark_parser(chapter_src_content, false);
 
     for event in pulldown_parser {
         match event {
             Event::Start(Tag::Image(_, dest, _)) => {
-                found.push(dest.to_string());
+                found_asset.push(dest.to_string());
             }
             Event::Html(html) => {
                 let content = html.into_string();
 
                 if let Ok(dom) = Dom::parse(&content) {
                     for item in dom.children {
-                        match item {
-                            Node::Element(ref element) if element.name == "img" => {
-                                if let Some(dest) = &element.attributes["src"] {
-                                    found.push(dest.clone());
-                                }
-                            }
-                            _ => {}
+                        if let Node::Element(ref element) = item {
+                            found_asset
+                                .extend(find_assets_in_nested_html_tags(element)?.into_iter());
                         }
                     }
                 }
@@ -155,12 +170,12 @@ fn assets_in_markdown(src: &str) -> Result<Vec<String>, Error> {
         }
     }
 
-    found.sort();
-    found.dedup();
-    if !found.is_empty() {
-        trace!("Assets found in content : {:?}", found);
+    found_asset.sort();
+    found_asset.dedup();
+    if !found_asset.is_empty() {
+        trace!("Assets found in content : {:?}", found_asset);
     }
-    Ok(found)
+    Ok(found_asset)
 }
 
 pub(crate) fn hash_link(url: &Url) -> String {
@@ -356,7 +371,7 @@ mod tests {
             parent_dir.join("rust-logo.svg").canonicalize().unwrap(),
         ];
 
-        let got = assets_in_markdown(src)
+        let got = find_assets_in_markdown(src)
             .unwrap()
             .into_iter()
             .map(|a| parent_dir.join(a).canonicalize().unwrap())
