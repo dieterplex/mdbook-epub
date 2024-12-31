@@ -40,7 +40,7 @@ toml = "0.5"
 html_parser = "0.6.2"
 url = "2.3"
 ureq = "2.5"
-zip = { version = "0.6", default-features = false, features = ["deflate"]}
+zip = { version = "2.2", default-features = false, features = ["deflate"]}
 
 [dev-dependencies]
 tempfile = "3.4"
