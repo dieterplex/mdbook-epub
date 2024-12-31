@@ -116,10 +116,10 @@ enum Error {
     Book(#[from] mdbook::errors::Error),
 
     #[error(transparent)]
-    EPubError(#[from] mdbook_epub::Error),
+    EPub(#[from] mdbook_epub::Error),
 
     #[error(transparent)]
-    HttpError(#[from] Box<ureq::Error>),
+    Http(#[from] Box<ureq::Error>),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -128,11 +128,11 @@ enum Error {
     StripPathPrefix(#[from] std::path::StripPrefixError),
 
     #[error(transparent)]
-    ZipError(#[from] zip::result::ZipError),
+    Zip(#[from] zip::result::ZipError),
 }
 
 impl From<ureq::Error> for Error {
     fn from(ue: ureq::Error) -> Self {
-        Error::HttpError(Box::new(ue))
+        Error::Http(Box::new(ue))
     }
 }
