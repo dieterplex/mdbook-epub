@@ -1,4 +1,4 @@
-use html_parser::{Dom, Element, Node};
+use html_parser::{Dom, Node};
 use mdbook::book::BookItem;
 use mdbook::renderer::RenderContext;
 use mdbook::utils::new_cmark_parser;
@@ -151,43 +151,40 @@ impl Asset {
     }
 }
 
-// Look up resources in nested HTML element
-fn find_assets_in_nested_html_tags(element: &Element) -> Result<Vec<String>, Error> {
-    let mut found_asset = Vec::new();
-
-    if element.name == "img" {
-        if let Some(dest) = &element.attributes["src"] {
-            found_asset.push(dest.clone());
-        }
-    }
-    for item in &element.children {
-        if let Node::Element(ref nested_element) = item {
-            found_asset.extend(find_assets_in_nested_html_tags(nested_element)?.into_iter());
-        }
-    }
-
-    Ok(found_asset)
-}
-
 // Look up resources in chapter md content
 fn find_assets_in_markdown(chapter_src_content: &str) -> Result<Vec<String>, Error> {
     let mut found_asset = Vec::new();
 
-    let pulldown_parser = new_cmark_parser(chapter_src_content, false);
-
-    for event in pulldown_parser {
-        match event {
-            Event::Start(Tag::Image(_, dest, _)) => {
-                found_asset.push(dest.to_string());
+    // Look up resources in nested HTML element
+    fn find_assets_in_nested_html_tags(element: &html_parser::Element, found: &mut Vec<String>) {
+        if element.name == "img" {
+            if let Some(dest) = &element.attributes["src"] {
+                found.push(dest.clone());
             }
-            Event::Html(html) => {
-                let content = html.into_string();
+        }
+        for item in &element.children {
+            if let Node::Element(ref nested_element) = item {
+                find_assets_in_nested_html_tags(nested_element, found);
+            }
+        }
+    }
 
+    for event in new_cmark_parser(chapter_src_content, false) {
+        match event {
+            Event::Start(Tag::Image {
+                link_type: _,
+                dest_url,
+                title: _,
+                id: _,
+            }) => {
+                found_asset.push(dest_url.to_string());
+            }
+            Event::Html(html) | Event::InlineHtml(html) => {
+                let content = html.into_string();
                 if let Ok(dom) = Dom::parse(&content) {
                     for item in dom.children {
                         if let Node::Element(ref element) = item {
-                            found_asset
-                                .extend(find_assets_in_nested_html_tags(element)?.into_iter());
+                            find_assets_in_nested_html_tags(element, &mut found_asset)
                         }
                     }
                 }

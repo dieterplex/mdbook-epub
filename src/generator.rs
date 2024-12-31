@@ -9,7 +9,7 @@ use std::{
 };
 
 use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
-use handlebars::{Handlebars, RenderError};
+use handlebars::{Handlebars, RenderError, RenderErrorReason};
 use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::renderer::RenderContext;
@@ -185,13 +185,16 @@ impl<'a> Generator<'a> {
     fn render_chapter(&self, ch: &Chapter) -> Result<String, RenderError> {
         let chapter_dir = if let Some(chapter_file_path) = &ch.path {
             chapter_file_path.parent().ok_or_else(|| {
-                RenderError::new(format!("No CSS found by a path = {:?}", ch.path))
+                RenderError::from(RenderErrorReason::Other(format!(
+                    "No CSS found by a path = {:?}",
+                    ch.path
+                )))
             })?
         } else {
-            return Err(RenderError::new(format!(
+            return Err(RenderError::from(RenderErrorReason::Other(format!(
                 "Draft chapter: {} could not be rendered.",
                 ch.name
-            )));
+            ))));
         };
         let mut body = String::new();
         let p = new_cmark_parser(&ch.content, self.config.curly_quotes);
@@ -354,7 +357,7 @@ impl<'a> Generator<'a> {
     }
 }
 
-impl<'a> Debug for Generator<'a> {
+impl Debug for Generator<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Generator")
             .field("ctx", &self.ctx)
@@ -375,16 +378,26 @@ impl<'a> AssetLinkFilter<'a> {
     }
     fn apply(&self, event: Event<'a>) -> Event<'a> {
         match event {
-            Event::Start(Tag::Image(ty, ref url, ref title)) => {
+            Event::Start(Tag::Image {
+                link_type,
+                ref dest_url,
+                ref title,
+                ref id,
+            }) => {
                 let asset = self
                     .assets
-                    .get(&url.to_string())
+                    .get(&dest_url.to_string())
                     .expect("found asset shouldn't be None");
                 match asset.source {
                     AssetKind::Remote(_) => {
                         // replace original image link with `/cache/<hash.ext>` in the chapter.
                         let new = self.path_prefix(asset.filename.as_path());
-                        Event::Start(Tag::Image(ty, CowStr::from(new), title.to_owned()))
+                        Event::Start(Tag::Image {
+                            link_type,
+                            dest_url: CowStr::from(new),
+                            title: title.to_owned(),
+                            id: id.to_owned(),
+                        })
                     }
                     _ => event,
                 }
