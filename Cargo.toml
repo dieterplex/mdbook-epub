@@ -22,7 +22,7 @@ name = "mdbook-epub"
 doc = false
 
 [dependencies]
-epub-builder = {git = "https://github.com/dieterplex/epub-builder", tag = "v0.6.0"}
+epub-builder = { version = "=0.8.0-alpha" }
 clap ={ version = "4.0", default-features = false, features = ["derive"]}
 thiserror = "1.0"
 pulldown-cmark = "0.9"
