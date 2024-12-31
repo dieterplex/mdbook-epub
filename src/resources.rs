@@ -271,7 +271,7 @@ pub(crate) mod handler {
     mod tests {
         use super::ContentRetriever;
         use crate::{resources::Asset, Error};
-        use tempdir::TempDir;
+        use tempfile::TempDir;
 
         type BoxRead = Box<(dyn std::io::Read + Send + Sync + 'static)>;
 
@@ -331,7 +331,7 @@ pub(crate) mod handler {
         }
 
         fn temp_remote_asset(url: &str) -> Result<Asset, Error> {
-            let dest_dir = TempDir::new("mdbook-epub")?;
+            let dest_dir = TempDir::with_prefix("mdbook-epub")?;
             Asset::from_url(url::Url::parse(url).unwrap(), dest_dir.path())
         }
     }
@@ -369,7 +369,7 @@ mod tests {
     fn find_local_asset() {
         let link = "./rust-logo.png";
         let link2 = "./epub-logo.svg";
-        let temp = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let temp = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let dest_dir = temp.path().to_string_lossy().to_string();
         let chapters = json!([
         {"Chapter": {
@@ -405,7 +405,7 @@ mod tests {
         let link = "https://www.rust-lang.org/static/images/rust-logo-blk.svg";
         let link2 = "https://www.rust-lang.org/static/images/rust-logo-blk.png";
         let link_parsed = Url::parse(link).unwrap();
-        let temp = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let temp = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let dest_dir = temp.path().to_string_lossy().to_string();
         let chapters = json!([
         {"Chapter": {
@@ -431,7 +431,7 @@ mod tests {
 
     #[test]
     fn find_draft_chapter_without_error() {
-        let temp = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let temp = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let dest_dir = temp.into_path().to_string_lossy().to_string();
         let chapters = json!([
         {"Chapter": {

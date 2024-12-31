@@ -451,7 +451,7 @@ mod tests {
             ![Rust Logo remote]({url})\n\n\
             <img alt=\"Rust Logo in html\" src=\"{svg}\" />\n"
         );
-        let destination = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let destination = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let json = ctx_with_template(&content, "src", destination.path()).to_string();
         let ctx = RenderContext::from_json(json.as_bytes()).unwrap();
 
@@ -487,7 +487,7 @@ mod tests {
             "http://server/remote.svg",
             "http://server/link.png",
         ];
-        let root = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let root = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let mut assets = HashMap::new();
         assets.insert(
             links[0].to_string(),
@@ -543,7 +543,7 @@ mod tests {
     #[test]
     fn render_remote_assets_in_sub_chapter() {
         let link = "https://mdbook.epub/dummy.svg";
-        let dest_dir = tempdir::TempDir::new("mdbook-epub").unwrap();
+        let dest_dir = tempfile::TempDir::with_prefix("mdbook-epub").unwrap();
         let ch1_1 = json!({
             "Chapter": {
                 "name": "subchapter",
@@ -615,7 +615,9 @@ mod tests {
         let json = ctx_with_template(
             "# Chapter 1\n\n",
             "nosuchsrc",
-            tempdir::TempDir::new("mdbook-epub").unwrap().path(),
+            tempfile::TempDir::with_prefix("mdbook-epub")
+                .unwrap()
+                .path(),
         )
         .to_string();
         let ctx = RenderContext::from_json(json.as_bytes()).unwrap();

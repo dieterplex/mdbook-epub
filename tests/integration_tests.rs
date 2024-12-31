@@ -11,7 +11,7 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Once;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 static INIT: Once = Once::new();
 
@@ -201,7 +201,7 @@ fn straight_quotes_transformed_into_curly_quotes() {
 /// Use `MDBook::load()` to load the dummy book into memory, then set up the
 /// `RenderContext` for use the EPUB generator.
 fn create_dummy_book() -> Result<(RenderContext, MDBook, TempDir), Error> {
-    let temp = TempDir::new("mdbook-epub")?;
+    let temp = TempDir::with_prefix("mdbook-epub")?;
 
     let dummy_book = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
