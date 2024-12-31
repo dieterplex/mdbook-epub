@@ -143,7 +143,7 @@ impl mdbook::Renderer for EpubRenderer {
     fn render(&self, ctx: &RenderContext) -> mdbook::errors::Result<()> {
         trace!("ctx={:?}, new dest={:?}", &ctx, &self.0);
         let mut ctx = ctx.to_owned();
-        ctx.destination = self.0.to_owned();
+        self.0.clone_into(&mut ctx.destination);
         generate(&ctx)?;
 
         Ok(())

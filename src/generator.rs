@@ -482,7 +482,7 @@ mod tests {
 
     #[test]
     fn render_assets() {
-        let links = vec![
+        let links = [
             "local.webp",
             "http://server/remote.svg",
             "http://server/link.png",
