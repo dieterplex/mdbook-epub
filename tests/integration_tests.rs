@@ -164,8 +164,8 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
         // let path = path.display().to_string();
         debug!("path = {}", &path.display().to_string());
         let got = doc.0.get_resource_by_path(&path);
-        debug!("got = {:?}", got.is_ok());
-        assert!(got.is_ok(), "{}", &path.display().to_string());
+        debug!("got = {:?}", got);
+        assert!(got.is_some(), "{}", &path.display().to_string());
     }
 }
 
@@ -189,7 +189,7 @@ fn render_only_draft_chapters_containing_sub() {
     }
     let path = oebps.join("Draft_simple.html");
     let got = doc.get_resource_by_path(path.as_str());
-    assert!(got.is_err(), "should not embed draft chapter");
+    assert!(got.is_none(), "should not embed draft chapter");
 }
 
 #[test]
