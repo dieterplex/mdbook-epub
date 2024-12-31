@@ -44,7 +44,7 @@ ureq = "2.5"
 zip = { version = "0.6", default-features = false, features = ["deflate"]}
 
 [dev-dependencies]
-tempdir = "0.3.7"
+tempfile = "3.4"
 epub = "1.2"
 serial_test = "0.5"
 mockall = "0.11"
