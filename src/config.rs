@@ -1,3 +1,4 @@
+use epub_builder::EpubVersion;
 use mdbook::renderer::RenderContext;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -26,7 +27,7 @@ pub struct Config {
     /// Use "smart quotes" instead of the usual `"` character.
     pub curly_quotes: bool,
     /// EPUB version to use if specified, otherwise defaults to the epub-builder default.
-    pub epub_version: Option<u8>,
+    epub_version: Option<u8>,
 }
 
 impl Config {
@@ -60,6 +61,17 @@ impl Config {
             None => Ok(DEFAULT_TEMPLATE.to_string()),
         }
     }
+
+    pub fn epub_version(&self) -> Result<EpubVersion, Error> {
+        match self.epub_version {
+            Some(2) | None => Ok(EpubVersion::V20),
+            Some(3) => Ok(EpubVersion::V30),
+            Some(v) => Err(Error::EpubDocCreate(format!(
+                "Unsupported epub version specified in book.toml: {}",
+                v
+            ))),
+        }
+    }
 }
 
 impl Default for Config {
@@ -74,5 +86,53 @@ impl Default for Config {
             curly_quotes: false,
             epub_version: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_epub_version() {
+        let c = Config::from_render_context(&ctx_with_version(None)).unwrap();
+        assert_eq!(EpubVersion::V20, c.epub_version().unwrap());
+
+        let c = Config::from_render_context(&ctx_with_version(Some(2))).unwrap();
+        assert_eq!(EpubVersion::V20, c.epub_version().unwrap());
+
+        let c = Config::from_render_context(&ctx_with_version(Some(3))).unwrap();
+        assert_eq!(EpubVersion::V30, c.epub_version().unwrap());
+
+        let c = Config::from_render_context(&ctx_with_version(Some(42))).unwrap();
+        assert!(matches!(c.epub_version(), Err(Error::EpubDocCreate(_))));
+    }
+
+    fn ctx_with_version(ver: Option<u8>) -> RenderContext {
+        let options = match ver {
+            Some(v) => json!({"epub-version": v}),
+            None => json!({}),
+        };
+        let ctx = json!({
+            "version": mdbook::MDBOOK_VERSION,
+            "root": "tests/dummy",
+            "book": {"sections": [{
+                "Chapter": {
+                    "name": "Chapter 1",
+                    "content": "",
+                    "number": [1],
+                    "sub_items": [],
+                    "path": "chapter_1.md",
+                    "parent_names": []
+                }}], "__non_exhaustive": null},
+            "config": {
+                "book": {"authors": [], "language": "en", "multilingual": false,
+                    "src": "src", "title": "DummyBook"},
+                "output": {"epub": options}},
+            "destination": "."
+        });
+        RenderContext::from_json(ctx.to_string().as_bytes()).unwrap()
     }
 }
