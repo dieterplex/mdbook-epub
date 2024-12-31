@@ -67,11 +67,12 @@ fn extract<R: Read + Seek, P: AsRef<Path>>(
         let mut file = archive.by_index(i)?;
         let filepath = file
             .enclosed_name()
-            .ok_or(zip::result::ZipError::InvalidArchive("Invalid file path"))?
+            .ok_or(zip::result::ZipError::InvalidArchive("Invalid file path"))?;
+        let striped_filepath = filepath
             .strip_prefix(ZIP_PREFIX)
             .expect("Unexpected prefix to strip in Zip file");
 
-        let outpath = directory.as_ref().join(filepath);
+        let outpath = directory.as_ref().join(striped_filepath);
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&outpath)?;
