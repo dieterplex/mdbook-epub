@@ -144,11 +144,40 @@ fn look_for_chapter_1_heading() {
 
 #[test]
 #[serial]
+fn look_for_chapter_2_image_link_in_readme() {
+    init_logging();
+    let mut doc = generate_epub().unwrap();
+
+    let path = if cfg!(target_os = "linux") {
+        Path::new("OEBPS").join("02_advanced").join("README.html") // linux
+    } else {
+        Path::new("OEBPS/02_advanced/README.html").to_path_buf() // windows with 'forward slash' /
+    };
+    let content = doc.0.get_resource_str_by_path(path).unwrap();
+
+    dbg!(&content);
+    assert!(content.contains("<img src=\"Epub_logo.svg\""));
+    assert!(content.contains("<img src=\"../rust-logo.png\""));
+}
+
+#[test]
+#[serial]
 fn rendered_document_contains_all_chapter_files_and_assets() {
     init_logging();
     debug!("rendered_document_contains_all_chapter_files_and_assets...");
-    let chapters = vec!["chapter_1.html", "rust-logo.png"];
+    let chapters = vec![
+        "chapter_1.html",
+        "rust-logo.png",
+        "02_advanced/README.html",
+        "02_advanced/Epub_logo.svg",
+    ];
     let mut doc = generate_epub().unwrap();
+    debug!("Number of internal epub resources = {:?}", doc.0.resources);
+    // number of internal epub resources for dummy test book
+    assert_eq!(11, doc.0.resources.len());
+    assert_eq!(5, doc.0.spine.len());
+    assert_eq!(doc.0.mdata("title").unwrap(), "DummyBook");
+    assert_eq!(doc.0.mdata("language").unwrap(), "en");
     debug!(
         "doc current path = {:?} / {:?}",
         doc.0.get_current_path(),
