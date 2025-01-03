@@ -195,8 +195,7 @@ impl<'a> Generator<'a> {
         };
         let mut body = String::new();
         let p = new_cmark_parser(&ch.content, self.config.curly_quotes);
-        let ch_depth = chapter_dir.components().count();
-        let asset_link_filter = AssetLinkFilter::new(&self.assets, ch_depth);
+        let asset_link_filter = AssetLinkFilter::new(&self.assets);
         let events = p.map(|event| asset_link_filter.apply(event));
 
         html::push_html(&mut body, events);
@@ -368,22 +367,26 @@ impl<'a> Debug for Generator<'a> {
 
 struct AssetLinkFilter<'a> {
     assets: &'a HashMap<String, Asset>,
-    depth: usize,
 }
 
 impl<'a> AssetLinkFilter<'a> {
-    fn new(assets: &'a HashMap<String, Asset>, depth: usize) -> Self {
-        Self { assets, depth }
+    fn new(assets: &'a HashMap<String, Asset>) -> Self {
+        Self { assets }
     }
     fn apply(&self, event: Event<'a>) -> Event<'a> {
         match event {
             Event::Start(Tag::Image(ty, ref url, ref title)) => {
-                if let Some(asset) = self.assets.get(&url.to_string()) {
-                    // replace original link with `cache/<hash.ext>` in book.
-                    let new = self.path_prefix(asset.filename.as_path());
-                    Event::Start(Tag::Image(ty, CowStr::from(new), title.to_owned()))
-                } else {
-                    event
+                let asset = self
+                    .assets
+                    .get(&url.to_string())
+                    .expect("found asset shouldn't be None");
+                match asset.source {
+                    AssetKind::Remote(_) => {
+                        // replace original image link with `/cache/<hash.ext>` in the chapter.
+                        let new = self.path_prefix(asset.filename.as_path());
+                        Event::Start(Tag::Image(ty, CowStr::from(new), title.to_owned()))
+                    }
+                    _ => event,
                 }
             }
             Event::Html(ref html) => {
@@ -422,24 +425,18 @@ impl<'a> AssetLinkFilter<'a> {
             _ => event,
         }
     }
+    // prepend a forward slash to the file path of the cached remote image in epub
     fn path_prefix(&self, path: &Path) -> String {
         // compatible to Windows, translate to forawrd slash in file path.
         let mut fsp = OsString::new();
-        for (i, component) in path.components().enumerate() {
-            if i > 0 {
-                fsp.push("/");
-            }
+        for component in path.components() {
+            fsp.push("/");
             fsp.push(component);
         }
-        let filename = match fsp.into_string() {
+        match fsp.into_string() {
             Ok(s) => s,
             Err(orig) => orig.to_string_lossy().to_string(),
-        };
-        (0..self.depth)
-            .map(|_| "..")
-            .chain(iter::once(filename.as_str()))
-            .collect::<Vec<_>>()
-            .join("/")
+        }
     }
 }
 
@@ -530,7 +527,7 @@ mod tests {
             links[2], links[0], links[1]
         );
 
-        let filter = AssetLinkFilter::new(&assets, 0);
+        let filter = AssetLinkFilter::new(&assets);
         let parser = new_cmark_parser(&markdown_str, false);
         let events = parser.map(|ev| filter.apply(ev));
         let mut html_buf = String::new();
@@ -543,7 +540,7 @@ mod tests {
                 <ul>\n\
                 <li><a href=\"{}\">link</a></li>\n\
                 <li><img src=\"{}\" alt=\"Local Image\" /></li>\n\
-                <li><img alt=\"Remote Image\" src=\"cache/{}\" >\n\
+                <li><img alt=\"Remote Image\" src=\"/cache/{}\" >\n\
                 </li>\n\
                 </ul>\n",
                 links[2], links[0], hashed_filename
@@ -596,16 +593,15 @@ mod tests {
         g.find_assets().unwrap();
         assert_eq!(g.assets.len(), 1);
 
-        let pat = |heading, prefix| {
-            format!("<h1>{heading}</h1>\n<p><img src=\"{prefix}cache/811c431d49ec880b.svg\"",)
-        };
+        let pat =
+            |heading| format!("<h1>{heading}</h1>\n<p><img src=\"/cache/811c431d49ec880b.svg\"",);
         if let BookItem::Chapter(ref ch) = ctx.book.sections[0] {
             let rendered: String = g.render_chapter(ch).unwrap();
-            assert!(rendered.contains(&pat("Chapter 1", "../")));
+            assert!(rendered.contains(&pat("Chapter 1")));
 
             if let BookItem::Chapter(ref sub_ch) = ch.sub_items[0] {
                 let sub_rendered = g.render_chapter(sub_ch).unwrap();
-                assert!(sub_rendered.contains(&pat("Subchapter", "../")));
+                assert!(sub_rendered.contains(&pat("Subchapter")));
             } else {
                 panic!();
             }
@@ -614,7 +610,7 @@ mod tests {
         }
         if let BookItem::Chapter(ref ch) = ctx.book.sections[1] {
             let rendered: String = g.render_chapter(ch).unwrap();
-            assert!(rendered.contains(&pat("Chapter 2", "")));
+            assert!(rendered.contains(&pat("Chapter 2")));
         } else {
             panic!();
         }
