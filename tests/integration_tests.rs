@@ -83,25 +83,37 @@ fn output_epub_is_valid() {
     assert!(got.is_ok());
 
     // also try to run epubcheck, if it's available
-    epub_check(&output_file).unwrap();
+    epub_check(&output_file).expect("Valitdating ePub");
 }
 
 fn epub_check(path: &Path) -> Result<(), Error> {
     init_logging();
-    let cmd = Command::new("epubcheck").arg(path).output();
+    let cmd = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .arg("epubcheck.bat")
+            .arg(path)
+            .output()
+    } else {
+        Command::new("epubcheck").arg(path).output()
+    };
 
     match cmd {
         Ok(output) => {
             if output.status.success() {
                 Ok(())
             } else {
-                Err(Error::EpubCheck)
+                let result = String::from_utf8_lossy(output.stderr.as_slice());
+                Err(Error::EpubCheck(format!(
+                    "epubckeck validation result: {result}"
+                )))
             }
         }
-        Err(_) => {
+        Err(error) => {
             // failed to launch epubcheck, it's probably not installed
-            debug!("Failed to launch epubcheck, it's probably not installed here...");
-            Err(Error::EpubCheck)
+            Err(Error::EpubCheck(format!(
+                "epubcheck command error: {error:}"
+            )))
         }
     }
 }

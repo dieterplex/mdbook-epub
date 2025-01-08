@@ -97,6 +97,38 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
+      - name: Install epubcheck (Linux or macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt install epubcheck
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+                brew update
+                brew install epubcheck
+          else
+                echo "$RUNNER_OS not supported"
+                exit 1
+          fi
+
+      - name: Install epubcheck (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install epubcheck
+
+          # Propagate jar path by env var to .bat
+          $epubcheck_version = $(choco list -r epubcheck).Split("|")[1]
+          $epubcheck_path = "C:\ProgramData\Chocolatey\lib\epubcheck\tools\epubcheck-$epubcheck_version"
+          echo "EPUBCHECK=$epubcheck_path" | Out-File -FilePath "$env:GITHUB_ENV" -Append
+
+          # Add .bat to PATH
+          echo "$env:GITHUB_WORKSPACE\ci" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+
+      # - name: debug in Windows runner
+      #   if: runner.os == 'Windows'
+      #   uses: fawazahmed0/action-debug-vscode@main
+
       - name: Build | Test
         run: "cargo llvm-cov
           --all-features
