@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ffi::OsString,
     fmt::{self, Debug, Formatter},
     fs::File,
@@ -20,7 +20,7 @@ use url::Url;
 
 use crate::config::Config;
 use crate::resources::handler::{ContentRetriever, ResourceHandler};
-use crate::resources::{self, Asset};
+use crate::resources::{self, Asset, AssetKind};
 use crate::Error;
 use crate::DEFAULT_CSS;
 
@@ -226,10 +226,15 @@ impl<'a> Generator<'a> {
     fn additional_assets(&mut self) -> Result<(), Error> {
         debug!("Embedding additional assets");
 
+        // An image may be used multiple times with different links that associate with the same asset.
+        let all_assets: HashSet<&Asset> = HashSet::from_iter(self.assets.values());
+
         // TODO: have a list of Asset URLs and try to download all of them (in parallel?)
         // to a temporary location.
-        for asset in self.assets.values() {
-            self.handler.download(asset)?;
+        for asset in all_assets {
+            if let AssetKind::Remote(_url) = &asset.source {
+                self.handler.download(asset)?;
+            }
             debug!("Embedding asset : {}", asset.filename.display());
             let mut content = Vec::new();
             self.handler
@@ -462,7 +467,7 @@ mod tests {
         let ctx = RenderContext::from_json(json.as_bytes()).unwrap();
 
         let mut mock_client = MockContentRetriever::new();
-        mock_client.expect_download().times(3).returning(|_| Ok(()));
+        mock_client.expect_download().times(1).returning(|_| Ok(()));
         // checks local path of assets
         let book_source = PathBuf::from(&ctx.root)
             .join(&ctx.config.book.src)

@@ -6,6 +6,8 @@ use mime_guess::Mime;
 use pulldown_cmark::{Event, Tag};
 use std::collections::HashMap;
 use std::ffi::OsStr;
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::num::Wrapping;
 use std::path::{Component, Path, PathBuf};
 use url::Url;
 
@@ -45,13 +47,13 @@ pub(crate) fn find(ctx: &RenderContext) -> Result<HashMap<String, Asset>, Error>
     Ok(assets)
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub(crate) enum AssetKind {
     Remote(Url),
     Local(PathBuf),
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Asset {
     /// The asset's absolute location on disk.
     pub(crate) location_on_disk: PathBuf,
@@ -63,6 +65,30 @@ pub(crate) struct Asset {
     pub(crate) source: AssetKind,
 }
 
+impl PartialEq for Asset {
+    fn eq(&self, other: &Self) -> bool {
+        self.location_on_disk == other.location_on_disk && self.mimetype == other.mimetype
+    }
+}
+
+impl Eq for Asset {}
+
+impl Hash for Asset {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use Wrapping<u64> to allow wrapping overflow
+        let mut sum = Wrapping::default();
+
+        let mut hasher = DefaultHasher::new();
+        Hash::hash(&self.location_on_disk, &mut hasher);
+        sum += hasher.finish();
+
+        let mut hasher = DefaultHasher::new();
+        Hash::hash(&self.mimetype, &mut hasher);
+        sum += hasher.finish();
+
+        state.write_u64(sum.0);
+    }
+}
 impl Asset {
     pub(crate) fn new<P, Q, K>(filename: P, absolute_location: Q, source: K) -> Self
     where
