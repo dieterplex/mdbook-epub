@@ -1,27 +1,23 @@
- # MDBook EPUB Backend
+# MDBook EPUB Backend (fork)
 
- - [![Build status](https://ci.appveyor.com/api/projects/status/94a37o6ffioapgoo/branch/master?svg=true)](https://ci.appveyor.com/project/blandger/mdbook-epub/branch/master)
- - [![Rust](https://github.com/blandger/mdbook-epub/actions/workflows/rust.yml/badge.svg)](https://github.com/blandger/mdbook-epub/actions/workflows/rust.yml)
-
-[**(Rendered Docs)**](https://michael-f-bryan.github.io/mdbook-epub/)
+- [![Rust](https://github.com/dieterplex/mdbook-epub/actions/workflows/ci.yml/badge.svg)](https://github.com/dieterplex/mdbook-epub/actions/workflows/ci.yml)
 
 An experimental backend to `mdbook` which will render your document as an `EPUB`
 file, suitable for viewing on e-readers and other similar devices.
 
-> **WARNING:** Not yet production ready. May eat your laundry.
+> **WARNING:** Not yet production ready.May eat your laundry.
 
 > **Note:** At the moment the default stylesheet is quite bare bones, serving
-  mainly to reset the styling used on various devices back to a known default.
-  This default isn't overly pretty, so you may want to include your own
-  stylesheets.
-
+> mainly to reset the styling used on various devices back to a known default.
+> This default isn't overly pretty, so you may want to include your own
+> stylesheets.
 
 ## Getting Started
 
 Before you can use the EPUB backend, you'll need to actually install it:
 
-```
-$ cargo install mdbook-epub
+```shell
+cargo install mdbook-epub
 ```
 
 Next you need to let `mdbook` know to use the alternate renderer by updating
@@ -48,10 +44,9 @@ The `mdbook-epub` executable can be run in "standalone" mode. This is where
 the backend can be used without needing to be called by `mdbook`, useful if
 you only want to render the EPUB document.
 
+```shell
+mdbook-epub --standalone ./path/to/book/dir
 ```
-$ mdbook-epub --standalone ./path/to/book/dir
-```
-
 
 ## Configuration
 
@@ -76,8 +71,9 @@ its section number.
 
 `epub-version`: Specifies the EPUB version to use. If omitted, the epub-builder
 default version is used.
- - `2` — EPUB 2.0.1
- - `3` — EPUB 3.0.1
+
+- `2` — EPUB 2.0.1
+- `3` — EPUB 3.0.1
 
 ```toml
 [output.epub]
@@ -96,17 +92,16 @@ In order to enable logging to the screen you need to set the `RUST_LOG` environm
 
 On Linux and macOS this can be done in the following way:
 
-```
+```bash
 RUST_LOG=debug  mdbook-epub
 ```
 
 On Windows CMD you need to set it on a separate line:
 
-```
+```pwsh
 set RUST_LOG=debug
 mdbook-epub
 ```
-
 
 ## Planned Features
 
@@ -117,13 +112,12 @@ list is by no means complete, so feature requests are most welcome!
 - [x] Generate a basic TOC
 - [x] Nested chapters - currently they're all inserted at the top level
 - [x] Include a default CSS stylesheet ([master.css])
-   - [ ] Actually make that stylesheet pretty enough for human consumption
+  - [x] Actually make that stylesheet pretty enough for human consumption
 - [x] Include user-defined stylesheets and themes
 - [ ] Allow users to tweak the generated page by providing their own template
 - [x] Ensure the generated document is viewable on the following platforms
   - [x] Amazon Kindle
   - [x] Sony PRS-T3
-
 
 ## Contributing
 
@@ -131,6 +125,5 @@ This backend is still very much in the development phase and as such a large
 number of features are missing. If you think of something you'd like please
 create an issue on the [issue tracker]!
 
-
-[issue tracker]: https://github.com/Michael-F-Bryan/mdbook-epub/issues
-[master.css]: https://github.com/Michael-F-Bryan/mdbook-epub/blob/master/src/master.css
+[issue tracker]: https://github.com/dieterplex/mdbook-epub/issues
+[master.css]: https://github.com/dieterplex/mdbook-epub/blob/master/src/master.css
